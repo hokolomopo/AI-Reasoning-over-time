@@ -23,6 +23,8 @@ class BeliefStateAgent(Agent):
         # Grid of walls (assigned with 'state.getWalls()' method) 
         self.walls = None
 
+        self.step = 0
+
     def updateAndGetBeliefStates(self, evidences):
         """
         Given a list of (noised) distances from pacman to ghosts,
@@ -47,24 +49,72 @@ class BeliefStateAgent(Agent):
         # XXX: Your code here
         height = self.walls.height
         width = self.walls.width
+        nbrGhosts = len(evidences)
 
         w = self.args.w
         p = self.args.p
-        print(p, w)
 
-        beliefStates = np.zeros((len(evidences), width, height))
+        oldBeliefState = beliefStates
+        beliefStates = np.zeros((nbrGhosts, width, height))
 
-        for i in range(len(evidences)):
-            ghostPosition = evidences[i]
-            state = beliefStates[i]
+        for k in range(nbrGhosts):
+            radar = evidences[k]
+            ghostBeliefeState = beliefStates[k]
+            
 
-            state[ghostPosition[0]][ghostPosition[1]] = 1
+            for i in range(width):
+                for j in range(height):
+                    proba = 0
+                    state = (i, j)
+                    lastP = oldBeliefState[k][i][j]
+ 
+                    pEgivenX = self._getProbaEgivenX(radar, state, w)
+                    
+                    pSum = 0
+                    for x in range(width):
+                        for y in range(height):
+                            pSum += self._getProbaXgivenX(state, (x, y), w) + lastP
+                                        
+                    proba = pEgivenX * pSum
+                    ghostBeliefeState[i][j] = proba
+            
+            # Normalize ghost probabilities matrix
+            totalSum = np.sum(ghostBeliefeState)
+
+            # Don't use np.multiply to not create a new array (and thus improve persormances)
+            for i in range(width):
+                for j in range(height):
+                    ghostBeliefeState[i][j] /= totalSum
+
+            beliefStates[k] = ghostBeliefeState
 
         # XXX: End of your code
         self.beliefGhostStates = beliefStates
         return beliefStates
 
-    
+    def _getProbaEgivenX(self, e, x, w):
+        
+        if (x[0] + w >= e[0]) and  (x[0] - w <= e[0]):
+            if (x[1] + w >= e[1]) and (x[1] - w <= e[1]):
+                return self._getUniformProba(w)
+        return 0
+
+    def _getProbaXgivenX(self, x, x_1, p):
+        distance = self._compute_manhattan(x_1, x)
+
+        # Impossible to go from x_1 to x in 1 move
+        if(distance != 1):
+            return 0
+
+        # Go East to go from x_1 to x
+        if(x[0] > x_1[0]):
+            return p + (1 - p) * 0.25
+
+        return (1 - p) * 0.25
+
+    def _getUniformProba(self, w):
+        return 1 / ((w + 2)**2)
+
     def _computeNoisyPositions(self, state):
         """
             Compute a noisy position from true ghosts positions.
@@ -113,7 +163,7 @@ class BeliefStateAgent(Agent):
         return self.updateAndGetBeliefStates(
             self._computeNoisyPositions(state))
 
-    def __compute_manhattan(self, position1, position2):
+    def _compute_manhattan(self, position1, position2):
         """
         Compute the Manhattan distance beteween 2 positions.
 

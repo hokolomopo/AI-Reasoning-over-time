@@ -10,10 +10,10 @@ import numpy as np
 defaultAgent = "humanagent.py"
 defaultLayout = "observer"
 silentDisplay = False
-pDefault = 0.001
-wDefault = 1
+pDefault = 1
+wDefault = 3
 bsagentfile = "beliefstateagent.py"
-nbrGhosts = 2
+nbrGhosts = 1
 defaultHiddenGhosts = False
 
 def restricted_float(x):
