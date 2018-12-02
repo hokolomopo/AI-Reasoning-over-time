@@ -61,6 +61,7 @@ class BeliefStateAgent(Agent):
             radar = evidences[k]
             ghostBeliefeState = beliefStates[k]
             
+            totalSum = 0
 
             for i in range(width):
                 for j in range(height):
@@ -69,7 +70,9 @@ class BeliefStateAgent(Agent):
                     lastP = oldBeliefState[k][i][j]
  
                     pEgivenX = self._getProbaEgivenX(radar, state, w)
-                    
+                    if(pEgivenX == 0):
+                        continue
+
                     pSum = 0
                     for x in range(width):
                         for y in range(height):
@@ -77,9 +80,8 @@ class BeliefStateAgent(Agent):
                                         
                     proba = pEgivenX * pSum
                     ghostBeliefeState[i][j] = proba
+                    totalSum += proba
             
-            # Normalize ghost probabilities matrix
-            totalSum = np.sum(ghostBeliefeState)
 
             # Don't use np.multiply to not create a new array (and thus improve persormances)
             for i in range(width):
@@ -94,9 +96,11 @@ class BeliefStateAgent(Agent):
 
     def _getProbaEgivenX(self, e, x, w):
         
-        if (x[0] + w >= e[0]) and  (x[0] - w <= e[0]):
-            if (x[1] + w >= e[1]) and (x[1] - w <= e[1]):
-                return self._getUniformProba(w)
+        # if (x[0] + w >= e[0]) and  (x[0] - w <= e[0]):
+        #     if (x[1] + w >= e[1]) and (x[1] - w <= e[1]):
+
+        if(self._inSquare(e, x, w)):
+            return self._getUniformProba(w)
         return 0
 
     def _getProbaXgivenX(self, x, x_1, p):
@@ -179,3 +183,11 @@ class BeliefStateAgent(Agent):
 
         return abs(position1[0] - position2[0]) \
             + abs(position1[1] - position2[1])
+
+    def _inSquare(self, x, center, size):
+        if (center[0] + size >= x[0]) and  (center[0] - size <= x[0]):
+            if (center[1] + size >= x[1]) and (center[1] - size <= x[1]):
+                return True
+
+        return False
+
