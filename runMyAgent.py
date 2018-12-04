@@ -10,8 +10,8 @@ import numpy as np
 defaultAgent = "humanagent.py"
 defaultLayout = "observer"
 silentDisplay = False
-pDefault = 0
-wDefault = 3
+pDefault = 0.9999
+wDefault = 5
 bsagentfile = "beliefstateagent.py"
 nbrGhosts = 1
 defaultHiddenGhosts = False
